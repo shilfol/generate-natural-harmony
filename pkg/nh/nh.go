@@ -1,7 +1,6 @@
 package nh
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -17,9 +16,13 @@ type NaturalHarmonyParam struct {
 	P float64
 }
 
+type processedMessage struct {
+	x, y  int
+	color color.Color
+}
+
 // ConvertNaturalHarmony convert Raw Image to Natual Harmony Image
 func ConvertNaturalHarmony(img image.Image, nhp *NaturalHarmonyParam) image.Image {
-	fmt.Println(nhp.P)
 	b := img.Bounds()
 	ci := image.NewRGBA(b)
 	for y := b.Min.Y; y < b.Max.Y; y++ {
@@ -29,6 +32,24 @@ func ConvertNaturalHarmony(img image.Image, nhp *NaturalHarmonyParam) image.Imag
 		}
 	}
 	return ci
+}
+
+// ConvertNaturalHarmonyAsync convert Raw Image to Natual Harmony Image with goroutine
+func ConvertNaturalHarmonyAsync(img image.Image, nhp *NaturalHarmonyParam) image.Image {
+	b := img.Bounds()
+	ci := image.NewRGBA(b)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		go innerProcessNaturalHarmonyAsync(y, img, nhp, ci)
+	}
+	return ci
+}
+
+func innerProcessNaturalHarmonyAsync(y int, img image.Image, nhp *NaturalHarmonyParam, ci *image.RGBA) {
+	b := img.Bounds()
+	for x := b.Min.X; x < b.Max.X; x++ {
+		color := innerProcessNaturalHarmony(img.At(x, y), nhp)
+		ci.Set(x, y, color)
+	}
 }
 
 func innerProcessNaturalHarmony(c color.Color, nhp *NaturalHarmonyParam) color.Color {
