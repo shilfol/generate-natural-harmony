@@ -17,3 +17,6 @@
 # images
 *.png
 *.jpg
+
+# wasm
+*.wasm

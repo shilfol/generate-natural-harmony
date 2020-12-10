@@ -1,0 +1,98 @@
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Title}}</title>
+</head>
+
+<body>
+    <p>
+        ナチュラルハーモニー
+    </p>
+
+    <form>
+        <div>
+            <label>入力画像</label><br>
+            <input id="imageInput" type="file" name="rawFile" accept="image/png, image/jpeg">
+        </div>
+        <div>
+            <label>パラメータ: <span id="paramValue">0.0</span></label><br>
+            <input id="range" type="range" name="param" min="0.0" max="1.0" step="0.01" value="0.0">
+        </div>
+        <div>
+            <input type="submit">
+        </div>
+    </form>
+
+    <div>
+        <img id="rawPreview" style="max-width:800px;">
+    </div>
+    <div>
+        <canvas id="outputNaturalHarmony"></canvas>
+    </div>
+
+
+
+    <script>
+        // param
+        const rangeElement = document.getElementById('range');
+        const paramTarget = document.getElementById('paramValue');
+        const rangeValue = (element, target) => {
+            return event => {
+                target.innerHTML = element.value;
+            }
+        }
+        rangeElement.addEventListener('input', rangeValue(rangeElement, paramTarget));
+
+        // output Canvas
+        const canvas = document.getElementById("outputNaturalHarmony");
+        const ctx = canvas.getContext("2d");
+
+        // preview
+        const rawPreview = document.getElementById("rawPreview");
+        rawPreview.addEventListener("load",  () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = rawPreview.width;
+            canvas.height = rawPreview.height;
+            ctx.drawImage(rawPreview, 0, 0);
+        });
+
+        const previewImage = ev => {
+            const fileReader = new FileReader();
+            fileReader.addEventListener("load", () => {
+                rawPreview.src = fileReader.result;
+            });
+            fileReader.readAsDataURL(ev.target.files[0]);
+        }
+        const inputElement = document.getElementById("imageInput");
+        inputElement.addEventListener('change', ev => {
+            previewImage(ev)
+        });
+
+        
+    </script>
+
+    <script src="wasm_exec.js"></script>
+    <script>
+        // wasm initialize section
+
+		if (!WebAssembly.instantiateStreaming) { // polyfill
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+		}
+
+		const go = new Go();
+		let mod, inst;
+		WebAssembly.instantiateStreaming(fetch("nh.wasm"), go.importObject).then((result) => {
+			mod = result.module;
+			inst = result.instance;
+			go.run(inst);
+		}).catch((err) => {
+			console.error(err);
+		});
+    </script>
+</body>
+
+</html>
