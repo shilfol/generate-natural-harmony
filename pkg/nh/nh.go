@@ -44,8 +44,8 @@ func ConvertNaturalHarmonyAsync(img image.Image, nhp *NaturalHarmonyParam) image
 	return ci
 }
 
-// ConvertNaturalHarmonyFromBytes convert raw bytes and write canvas via context
-func ConvertNaturalHarmonyFromBytes(raw []byte, w, h int, nhp *NaturalHarmonyParam, cb func(r, g, b, a, x, y int)) {
+// ConvertNaturalHarmonyFromBytes convert raw bytes (destructive method)
+func ConvertNaturalHarmonyFromBytes(raw []byte, w, h int, nhp *NaturalHarmonyParam) {
 	nmax := 255.0
 	for y := 0; y < h; y++ {
 		id := 4 * y * w
@@ -56,7 +56,10 @@ func ConvertNaturalHarmonyFromBytes(raw []byte, w, h int, nhp *NaturalHarmonyPar
 			mc := innerColorProcessNaturalHarmony(co, nhp)
 			r, g, b, a := mc.RGBA()
 			ur, ug, ub, ua := convertUInt8(r, g, b, a)
-			cb(ur, ug, ub, ua, x, y)
+			raw[idx] = byte(ur)
+			raw[idx+1] = byte(ug)
+			raw[idx+2] = byte(ub)
+			raw[idx+3] = byte(ua)
 		}
 	}
 }

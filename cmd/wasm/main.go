@@ -1,7 +1,6 @@
 package main // mainでないとダメそう, TODO: 調査する
 
 import (
-	"fmt"
 	"strconv"
 	"syscall/js"
 
@@ -12,41 +11,44 @@ func main() {
 	document := js.Global().Get("document")
 
 	cb := func(this js.Value, arg []js.Value) interface{} {
+		// 読み書きを行うcanvasとcontextの取得
 		outputCanvas := document.Call("getElementById", "outputNaturalHarmony")
 		ctx := outputCanvas.Call("getContext", "2d")
 
 		cvWidth := outputCanvas.Get("width")
 		cvHeight := outputCanvas.Get("height")
 
+		// canvasのbyte列をuint8の形で読み込む
 		data := ctx.Call("getImageData", 0, 0, cvWidth, cvHeight).Get("data")
-		uarr := js.Global().Get("Uint8Array").New(data)
+		uarr := js.Global().Get("Uint8ClampedArray").New(data)
 		garr := make([]byte, data.Get("length").Int())
 
+		// Go空間に読み込む
 		_ = js.CopyBytesToGo(garr, uarr)
 
+		// rangeの値からパラメータ取得
 		rv := document.Call("getElementById", "range")
 		p, _ := strconv.ParseFloat(rv.Get("value").String(), 64)
-
-		println("param: ", p)
 		nhp := nh.NaturalHarmonyParam{
 			P: p,
 		}
-		writeCanvas := func(r, g, b, a, x, y int) {
-			str := fmt.Sprintf("rgb(%d,%d,%d)", r, g, b)
-			ctx.Set("fillStyle", str)
-			ctx.Call("fillRect", x, y, 1, 1)
-		}
-		nh.ConvertNaturalHarmonyFromBytes(garr, cvWidth.Int(), cvHeight.Int(), &nhp, writeCanvas)
 
+		// ナチュラルハーモニーする
+		nh.ConvertNaturalHarmonyFromBytes(garr, cvWidth.Int(), cvHeight.Int(), &nhp)
+
+		// objectを再利用してjs空間に戻す
 		_ = js.CopyBytesToJS(uarr, garr)
 
-		println(garr[0])
-		println(garr[len(garr)-1])
-		println(cvWidth.Int(), cvHeight.Int(), cvHeight.Int()*cvWidth.Int(), len(garr))
+		// canvasに書き戻す
+		imageData := js.Global().Get("ImageData").New(uarr, cvWidth, cvHeight)
+		ctx.Call("putImageData", imageData, 0, 0)
+
+		println("enjoy Natural Harmony!")
 
 		return "wasm value"
 	}
 
+	// rangeの変更に追従するcbとして登録
 	inputElement := document.Call("getElementById", "range")
 	inputElement.Call("addEventListener", "change", js.FuncOf(cb))
 
