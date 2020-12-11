@@ -44,6 +44,23 @@ func ConvertNaturalHarmonyAsync(img image.Image, nhp *NaturalHarmonyParam) image
 	return ci
 }
 
+// ConvertNaturalHarmonyFromBytes convert raw bytes and write canvas via context
+func ConvertNaturalHarmonyFromBytes(raw []byte, w, h int, nhp *NaturalHarmonyParam, cb func(r, g, b, a, x, y int)) {
+	nmax := 255.0
+	for y := 0; y < h; y++ {
+		id := 4 * y * w
+		for x := 0; x < w; x++ {
+			idx := id + x*4
+			p := raw[idx : idx+4] // r,g,b,a pixel value [0, 255]
+			co := colorful.Color{R: float64(p[0]) / nmax, G: float64(p[1]) / nmax, B: float64(p[2]) / nmax}
+			mc := innerColorProcessNaturalHarmony(co, nhp)
+			r, g, b, a := mc.RGBA()
+			ur, ug, ub, ua := convertUInt8(r, g, b, a)
+			cb(ur, ug, ub, ua, x, y)
+		}
+	}
+}
+
 func innerProcessNaturalHarmonyAsync(y int, img image.Image, nhp *NaturalHarmonyParam, ci *image.RGBA) {
 	b := img.Bounds()
 	for x := b.Min.X; x < b.Max.X; x++ {
@@ -59,18 +76,29 @@ func innerProcessNaturalHarmony(c color.Color, nhp *NaturalHarmonyParam) color.C
 	// convert colorful color
 	co := colorful.Color{R: float64(r) / nmax, G: float64(g) / nmax, B: float64(b) / nmax}
 
-	h, s, v := co.Hsv()
-	mh, ms, mv := mappingNaturalHarmonyHSV(h, s, v, nhp)
-	mc := colorful.Hsv(mh, ms, mv)
+	mc := innerColorProcessNaturalHarmony(co, nhp)
 	mr, mg, mb, ma := mc.RGBA()
-
 	ur, ug, ub, ua := convertUint16(mr, mg, mb, ma)
 	nhc := color.RGBA64{ur, ug, ub, ua}
 	return nhc
 }
 
+func innerColorProcessNaturalHarmony(c colorful.Color, nhp *NaturalHarmonyParam) colorful.Color {
+	h, s, v := c.Hsv()
+	mh, ms, mv := mappingNaturalHarmonyHSV(h, s, v, nhp)
+	mc := colorful.Hsv(mh, ms, mv)
+	return mc
+}
+
 func convertUint16(r, g, b, a uint32) (ur, ug, ub, ua uint16) {
 	return uint16(r), uint16(g), uint16(b), uint16(a)
+}
+
+func convertUInt8(r, g, b, a uint32) (ur, ug, ub, ua int) {
+	// intで返すがuint8の範囲([0,255])に収める
+	div := 65535.0
+	fr, fg, fb, fa := float64(r)/div, float64(g)/div, float64(b)/div, float64(a)/div
+	return int(fr * 255.0), int(fg * 255.0), int(fb * 255.0), int(fa * 255.0)
 }
 
 func mappingNaturalHarmonyHSV(h, s, v float64, nhp *NaturalHarmonyParam) (hh, ss, vv float64) {

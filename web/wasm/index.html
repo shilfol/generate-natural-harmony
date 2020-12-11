@@ -25,7 +25,8 @@
     </form>
 
     <div>
-        <img id="rawPreview" style="max-width:800px;">
+        <!-- 表示させず読み込み用にする -->
+        <img id="rawPreview" style="display: none;" >
     </div>
     <div>
         <canvas id="outputNaturalHarmony"></canvas>
@@ -34,28 +35,21 @@
 
 
     <script>
-        // param
-        const rangeElement = document.getElementById('range');
-        const paramTarget = document.getElementById('paramValue');
-        const rangeValue = (element, target) => {
-            return event => {
-                target.innerHTML = element.value;
-            }
-        }
-        rangeElement.addEventListener('input', rangeValue(rangeElement, paramTarget));
-
         // output Canvas
         const canvas = document.getElementById("outputNaturalHarmony");
         const ctx = canvas.getContext("2d");
 
-        // preview
-        const rawPreview = document.getElementById("rawPreview");
-        rawPreview.addEventListener("load",  () => {
+        const reloadCanvas = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             canvas.width = rawPreview.width;
             canvas.height = rawPreview.height;
             ctx.drawImage(rawPreview, 0, 0);
-        });
+            console.log("reload canvas");
+        }
+
+        // preview
+        const rawPreview = document.getElementById("rawPreview");
+        rawPreview.addEventListener("load",  reloadCanvas);
 
         const previewImage = ev => {
             const fileReader = new FileReader();
@@ -69,6 +63,16 @@
             previewImage(ev)
         });
 
+        // param
+        const rangeElement = document.getElementById('range');
+        const paramTarget = document.getElementById('paramValue');
+        const rangeValue = (element, target) => {
+            return event => {
+                target.innerHTML = element.value;
+            }
+        }
+        rangeElement.addEventListener('input', rangeValue(rangeElement, paramTarget));
+        rangeElement.addEventListener('change', reloadCanvas);
         
     </script>
 
