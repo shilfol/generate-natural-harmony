@@ -104,6 +104,11 @@ func convertUInt8(r, g, b, a uint32) (ur, ug, ub, ua int) {
 	return int(fr * 255.0), int(fg * 255.0), int(fb * 255.0), int(fa * 255.0)
 }
 
+func isNearlyZero(x float64) bool {
+	delta := 1.0e-5
+	return math.Abs(x-0.0000000000) < delta
+}
+
 func mappingNaturalHarmonyHSV(h, s, v float64, nhp *NaturalHarmonyParam) (hh, ss, vv float64) {
 	// hue(色相)はそのまま
 	hh = h
@@ -122,7 +127,12 @@ func mappingNaturalHarmonyHSV(h, s, v float64, nhp *NaturalHarmonyParam) (hh, ss
 	// diffをいくらか小さくした値(p)をcvに近づける方向へ加算
 	// vv = ((cv-v)/dv)*dv*p + v を整理したもの
 	p := nhp.P
-	vv = p*(cv-v) + v
+	if !isNearlyZero(h) || !isNearlyZero(s) {
+		vv = p*(cv-v) + v
+	} else {
+		// 白 or 黒はそのまま出す
+		vv = v
+	}
 
 	return
 }
