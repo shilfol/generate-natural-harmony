@@ -102,6 +102,8 @@
 
   </script>
 
+  <!-- tiny版にしたいがout of memoryが発生する -->
+  <!-- <script src="wasm_exec_tiny.js"></script> -->
   <script src="wasm_exec.js"></script>
   <script>
     // wasm initialize section
@@ -114,6 +116,7 @@
 
     const go = new Go();
     let mod, inst;
+    // WebAssembly.instantiateStreaming(fetch("nh_tiny.wasm"), go.importObject).then((result) => {
     WebAssembly.instantiateStreaming(fetch("nh.wasm"), go.importObject).then((result) => {
       mod = result.module;
       inst = result.instance;

@@ -24,6 +24,8 @@ https://tech.basicinc.jp/articles/197
 https://undersourcecode.hatenablog.com/entry/2019/08/02/194749
 http://shinimae.hatenablog.com/entry/2016/09/29/193858
 https://blog.narumium.net/2019/03/09/%E3%80%90go%E3%80%91ver1-12%E3%81%A7%E3%81%AEwebassembly/
+https://beta-notes.way-nifty.com/blog/2020/04/post-4897c6.html
+https://beta-notes.way-nifty.com/blog/2020/04/post-09a624.html
 
 ## TODO:
 
