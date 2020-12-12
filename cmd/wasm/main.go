@@ -18,6 +18,10 @@ func main() {
 		cvWidth := outputCanvas.Get("width")
 		cvHeight := outputCanvas.Get("height")
 
+		if cvHeight.Int() == 0 || cvWidth.Int() == 0 {
+			return "canvas is empty"
+		}
+
 		// canvasのbyte列をuint8の形で読み込む
 		data := ctx.Call("getImageData", 0, 0, cvWidth, cvHeight).Get("data")
 		uarr := js.Global().Get("Uint8ClampedArray").New(data)
