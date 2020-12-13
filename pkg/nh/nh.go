@@ -138,18 +138,24 @@ func mappingNaturalHarmonyHSV(h, s, v float64, nhp *NaturalHarmonyParam) (hh, ss
 }
 
 // 実験中 :　明度情報を使ったナチュラルハーモニー変換
-//
+// 暗い部分は青紫に近づけ, 明るい部分は黄色に近づけてみる
 func mappingNaturalHarmonyHSVchangeHue(h, s, v float64, nhp *NaturalHarmonyParam) (hh, ss, vv float64) {
 	// saturation(彩度)はそのまま
 	ss = s
-	// value(明度)をそのままにする
-	vv = v
-
 	// 後続処理は白or黒の場合除外する
 	if isNearlyZero(h) && isNearlyZero(s) {
+		vv = v
 		hh = h
 		return
 	}
+
+	// 元の色のラジアンを計算する
+	rr := h * math.Pi / 180.0
+
+	// valueは上述と同様の処理を加える
+	p := nhp.P
+	cv := (math.Cos(rr-math.Pi/3.0))/2.0 + 0.5
+	vv = 0.5*p*(cv-v) + v
 
 	// hue(色相)をvalueに沿って変換する
 	// vが0に近い(黒寄り)なら青の方向に, 1に近い(白寄り)なら黄の方向に寄せる
@@ -165,13 +171,11 @@ func mappingNaturalHarmonyHSVchangeHue(h, s, v float64, nhp *NaturalHarmonyParam
 	} else {
 		radian += vr
 	}
-	// 元の色のラジアンを計算する
-	rr := h * math.Pi / 180.0
 
 	// 差分を取りながら計算
 	// パラメータもここで利用する
-	p := nhp.P
-	rhh := p*(radian-rr) + rr
+	// valueとは感度が違うので補正をかけて抑えておく
+	rhh := 0.1*p*(radian-rr) + rr
 
 	// [0, 2pi]の範囲に抑えておくために2piで剰余を取っておく
 	// 剰余が取れないので力づくで
