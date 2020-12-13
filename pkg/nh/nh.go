@@ -136,3 +136,54 @@ func mappingNaturalHarmonyHSV(h, s, v float64, nhp *NaturalHarmonyParam) (hh, ss
 
 	return
 }
+
+// 実験中 :　明度情報を使ったナチュラルハーモニー変換
+//
+func mappingNaturalHarmonyHSVchangeHue(h, s, v float64, nhp *NaturalHarmonyParam) (hh, ss, vv float64) {
+	// saturation(彩度)はそのまま
+	ss = s
+	// value(明度)をそのままにする
+	vv = v
+
+	// 後続処理は白or黒の場合除外する
+	if isNearlyZero(h) && isNearlyZero(s) {
+		hh = h
+		return
+	}
+
+	// hue(色相)をvalueに沿って変換する
+	// vが0に近い(黒寄り)なら青の方向に, 1に近い(白寄り)なら黄の方向に寄せる
+	// 0~1を-pi~0(rad)に変換するので, -1した後にpiをかける
+	vr := (v - 1.0) * math.Pi
+	// 基準となる角度は黄色のpi/3
+	radian := math.Pi / 3.0
+
+	// 60(黄)~150(緑)~240(青)の範囲か240~330(赤)~60の範囲であるべき色を変える
+	// vrが負の数を取ることに注意する
+	if h >= 60.0 && h <= 240 {
+		radian -= vr
+	} else {
+		radian += vr
+	}
+	// 元の色のラジアンを計算する
+	rr := h * math.Pi / 180.0
+
+	// 差分を取りながら計算
+	// パラメータもここで利用する
+	p := nhp.P
+	rhh := p*(radian-rr) + rr
+
+	// [0, 2pi]の範囲に抑えておくために2piで剰余を取っておく
+	// 剰余が取れないので力づくで
+	tpi := 2.0 * math.Pi
+	if rhh > tpi {
+		rhh -= tpi
+	} else if rhh < 0.0 {
+		rhh += tpi
+	}
+
+	// ラジアンからhに戻す
+	hh = rhh * 180.0 / math.Pi
+
+	return
+}
