@@ -27,6 +27,9 @@ https://blog.narumium.net/2019/03/09/%E3%80%90go%E3%80%91ver1-12%E3%81%A7%E3%81%
 https://beta-notes.way-nifty.com/blog/2020/04/post-4897c6.html
 https://beta-notes.way-nifty.com/blog/2020/04/post-09a624.html
 
+## HCL
+https://www.konicaminolta.jp/instruments/knowledge/color/section2/02.html
+
 ## TODO:
 
 ### web app として提供

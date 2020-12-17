@@ -47,20 +47,42 @@ func ConvertNaturalHarmonyAsync(img image.Image, nhp *NaturalHarmonyParam) image
 // ConvertNaturalHarmonyFromBytes convert raw bytes (destructive method)
 func ConvertNaturalHarmonyFromBytes(raw []byte, w, h int, nhp *NaturalHarmonyParam) {
 	nmax := 255.0
+	// for y := 0; y < h; y++ {
+	// 	id := 4 * y * w
+	// 	for x := 0; x < w; x++ {
+	// 		idx := id + x*4
+	// 		p := raw[idx : idx+4] // r,g,b,a pixel value [0, 255]
+	// 		co := colorful.Color{R: float64(p[0]) / nmax, G: float64(p[1]) / nmax, B: float64(p[2]) / nmax}
+	// 		mc := innerColorProcessNaturalHarmony(co, nhp)
+	// 		r, g, b, a := mc.RGBA()
+	// 		ur, ug, ub, ua := convertUInt8(r, g, b, a)
+	// 		raw[idx] = byte(ur)
+	// 		raw[idx+1] = byte(ug)
+	// 		raw[idx+2] = byte(ub)
+	// 		raw[idx+3] = byte(ua)
+	// 	}
+	// }
+	fc := make(chan int, h)
 	for y := 0; y < h; y++ {
 		id := 4 * y * w
-		for x := 0; x < w; x++ {
-			idx := id + x*4
-			p := raw[idx : idx+4] // r,g,b,a pixel value [0, 255]
-			co := colorful.Color{R: float64(p[0]) / nmax, G: float64(p[1]) / nmax, B: float64(p[2]) / nmax}
-			mc := innerColorProcessNaturalHarmony(co, nhp)
-			r, g, b, a := mc.RGBA()
-			ur, ug, ub, ua := convertUInt8(r, g, b, a)
-			raw[idx] = byte(ur)
-			raw[idx+1] = byte(ug)
-			raw[idx+2] = byte(ub)
-			raw[idx+3] = byte(ua)
-		}
+		go func(id int) {
+			for x := 0; x < w; x++ {
+				idx := id + x*4
+				p := raw[idx : idx+4] // r,g,b,a pixel value [0, 255]
+				co := colorful.Color{R: float64(p[0]) / nmax, G: float64(p[1]) / nmax, B: float64(p[2]) / nmax}
+				mc := innerColorProcessNaturalHarmony(co, nhp)
+				r, g, b, a := mc.RGBA()
+				ur, ug, ub, ua := convertUInt8(r, g, b, a)
+				raw[idx] = byte(ur)
+				raw[idx+1] = byte(ug)
+				raw[idx+2] = byte(ub)
+				raw[idx+3] = byte(ua)
+			}
+			fc <- id
+		}(id)
+	}
+	for i := 0; i < h; i++ {
+		<-fc
 	}
 }
 
@@ -87,10 +109,22 @@ func innerProcessNaturalHarmony(c color.Color, nhp *NaturalHarmonyParam) color.C
 }
 
 func innerColorProcessNaturalHarmony(c colorful.Color, nhp *NaturalHarmonyParam) colorful.Color {
+	mc := processNaturalHarmonyHSV(c, nhp)
+	return mc
+}
+
+func processNaturalHarmonyHSV(c colorful.Color, nhp *NaturalHarmonyParam) colorful.Color {
 	h, s, v := c.Hsv()
 	mh, ms, mv := mappingNaturalHarmonyHSV(h, s, v, nhp)
 	mc := colorful.Hsv(mh, ms, mv)
 	return mc
+}
+
+func processNaturalHarmonyHCL(co colorful.Color, nhp *NaturalHarmonyParam) colorful.Color {
+	h, c, l := co.Hcl()
+	mh, mc, ml := mappingNaturalHarmonyHCL(h, c, l, nhp)
+	rc := colorful.Hcl(mh, mc, ml)
+	return rc
 }
 
 func convertUint16(r, g, b, a uint32) (ur, ug, ub, ua uint16) {
@@ -188,6 +222,37 @@ func mappingNaturalHarmonyHSVchangeHue(h, s, v float64, nhp *NaturalHarmonyParam
 
 	// ラジアンからhに戻す
 	hh = rhh * 180.0 / math.Pi
+
+	return
+}
+
+func mappingNaturalHarmonyHCL(h, c, l float64, nhp *NaturalHarmonyParam) (hh, cc, ll float64) {
+	//WIP
+	// hue(色相)はそのまま
+	hh = h
+	// chroma(彩度)もいったんそのまま
+	cc = c
+	// lightness(明度)はhueに沿って変換する
+	// 以下はメソッドはhsvそのまま
+	// 黄色の値をyh, 紫の値をphとするとcos(yh) = cos0 = 1, cos(ph) = cos pi = -1となるように定める
+	// 0~360を0~2pi(rad)に変換するので, pi/180をかける
+	radian := h * math.Pi / 180.0
+	yr := 102.9 * math.Pi / 180.0
+	// 黄色のhは90(0~360)の値であるので, pi/2だけずらす
+	// vは0~1, cosは-1~1なので2で割って1/2を足す
+	cl := (math.Cos(radian-yr))/2.0 + 0.5
+
+	// もともとのvとdiffを取ってみる
+	// dv := math.Abs(cv - v)
+	// diffをいくらか小さくした値(p)をcvに近づける方向へ加算
+	// vv = ((cv-v)/dv)*dv*p + v を整理したもの
+	p := nhp.P
+	if !isNearlyZero(c) {
+		ll = p*(cl-l) + l
+	} else {
+		// TODO: 黒は弾いたが白を弾いてない
+		ll = l
+	}
 
 	return
 }

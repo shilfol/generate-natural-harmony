@@ -34,7 +34,7 @@ func main() {
 		rv := document.Call("getElementById", "range")
 		p, _ := strconv.ParseFloat(rv.Get("value").String(), 64)
 		nhp := nh.NaturalHarmonyParam{
-			P: p,
+			P: 0.8 * p, // TODO: 適切な値にする
 		}
 
 		// ナチュラルハーモニーする

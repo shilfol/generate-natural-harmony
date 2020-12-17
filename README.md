@@ -16,4 +16,6 @@ Go 言語のインストールをした後に実行
 ls output
 ```
 
-### Web(WIP)
+### Web
+https://create-natural-harmony.web.app
+

@@ -18,9 +18,9 @@
 
 <body>
   <div class="container">
-    <h1>
-      ナチュラルハーモニー
-    </h1>
+    <div class="section">
+      <img id="logo" src="./logo.svg" style="width: 100%;">
+    </div>
     <div class="section">
       <form action="#">
         <div class="row">
@@ -54,17 +54,38 @@
       </form>
     </div>
     <div style="font-family: 'Kosugi Maru', sans-serif;">
-      <h4>
+      <h3>
         使い方
-      </h4>
+      </h3>
       <p>
         画像を選んだ後、上のスライダーを使ってお好みのナチュラルハーモニーに調整してください。
       </p>
       <p>
         0だと元画像のままです。数値を増やすほどナチュラルハーモニーです。
       </p>
+      <p>
+        調整が出来たら、下のボタンで保存ができます。共有したりしてみてください。
+      </p>
+
     </div>
 
+    <div class="section">
+        <a id="saveButton" class="btn-large white-text" for="imageInput" target="_blank">
+          <i class="material-icons left white-text">save</i>save image
+        </a>
+    </div>
+
+    <div class="section" style="font-family: 'Kosugi Maru', sans-serif;">
+      <h5>
+        つくった人 : yaya 
+        <a href="https://twitter.com/shilfol?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-lang="ja" data-dnt="true" data-show-count="false">Follow @shilfol</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+      </h5>
+      <p>
+        感想・要望などはtwitter or <a href="https://github.com/shilfol/generate-natural-harmony" target="_blank">Issue/PR</a>にてどうぞ
+      </p>
+      <p>
+      </p>
+    </div>
   </div>
 
   <script>
@@ -121,6 +142,14 @@
       mod = result.module;
       inst = result.instance;
       go.run(inst);
+
+      // go側の処理が終わった後のcbに画像url更新を追加
+      rangeElement.addEventListener("change", () => {
+        canvas.toBlob(blob => {
+          console.log("set url");
+          saveButton.href = URL.createObjectURL(blob);
+        });
+      });
     }).catch((err) => {
       console.error(err);
     });
